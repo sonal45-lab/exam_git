@@ -1,0 +1,555 @@
+Git Related Sample for Practical exam: 
+Tracking Files Lifecycle :-
+git init
+git status
+
+# create file
+echo "hello" > app.txt
+
+git add app.txt
+git commit -m "first commit"
+
+# modify file
+echo "update" >> app.txt
+
+git diff
+
+git add app.txt
+git commit -m "update file"
+
+# branch
+git branch dev
+git switch dev
+
+# changes in dev
+echo "dev change" >> app.txt
+git add app.txt
+git commit -m "dev changes"
+
+# switch back
+git switch main
+
+# compare branches
+git diff main dev
+------------------------------------------------------------------------------
+Branching and Isolation
+# create branch
+git branch dev
+
+# switch branch
+git checkout dev
+
+# make changes
+echo "change in dev branch" >> app.txt
+
+git add app.txt
+git commit -m "change in dev"
+
+# switch back
+git checkout main
+
+# compare branches
+git diff main dev
+--------------------------------------------------------------------------------
+Merging and Conflict Handling
+# Step 1: switch to main
+git checkout main
+
+# Step 2: fast-forward merge
+git merge dev
+
+# Step 3: create conflict
+git checkout main
+echo "main change" > app.txt
+git commit -am "main change"
+
+git checkout dev
+echo "dev change" > app.txt
+git commit -am "dev change"
+
+# Step 4: merge again (conflict)
+git checkout main
+git merge dev
+
+# Step 5: resolve conflict manually
+# edit app.txt and remove conflict markers
+
+git add app.txt
+git commit -m "conflict resolved"
+----------------------------------------------
+Working with Remote Repositories
+
+# check remote
+git remote -v
+
+# add remote
+git remote add origin https://github.com/sonal45-lab/exam_git.git
+
+# clone repo
+git clone https://github.com/sonal45-lab/exam_git.git
+
+cd exam_git
+
+# fetch updates
+git fetch origin
+
+# pull changes
+git pull origin main
+
+# make changes
+echo "new change" >> app.txt
+
+git add app.txt
+git commit -m "changes"
+
+# push changes
+git push origin main
+--------------------------------------------------------------
+GitHub Collaboration Workflow
+# Step 1: push local repo
+git remote add origin https://github.com/sonal45-lab/exam_git.git
+git push -u origin main
+
+# Step 2: clone in another directory
+cd D:/
+git clone https://github.com/sonal45-lab/exam_git.git
+cd exam_git
+
+# Step 3: create feature branch
+git branch feature1
+git checkout feature1
+
+# Step 4: make changes
+echo "feature work" >> app.txt
+
+git add app.txt
+git commit -m "feature added"
+
+# Step 5: push feature branch
+git push origin feature1
+------------------------------------------------------------------
+ ->Undoing Changes & Recovery
+. Undo Unstaged Changes
+notepad app.txt
+git status
+git checkout -- app.txt
+🔹 2. Unstage Files
+notepad app.txt
+git add app.txt
+git status
+git reset app.txt
+git status
+🔹 3. Amend Commit
+git add app.txt
+git commit -m "wrong message"
+git commit --amend -m "correct message"
+🔹 4. Git Reset (Soft, Mixed, Hard)
+👉 Soft Reset
+git add app.txt
+git commit -m "soft test"
+git reset --soft HEAD~1
+👉 Mixed Reset
+git add app.txt
+git commit -m "mixed test"
+git reset --mixed HEAD~1
+-> Hard Reset
+git add app.txt
+git commit -m "hard test"
+git reset --hard HEAD~1
+🔹 5. Safe Undo (Revert)
+git log --oneline
+git revert HEAD
+git log --oneline
+🔹 6. Recover Using Reflog
+git add app1.txt
+git commit -m "reflog test"
+
+git reset --hard HEAD~1
+
+git reflog
+
+git reset --hard HEAD@{1}
+-----------------------------------------------------------------
+Branching and Isolation
+# Create dev branch
+git branch dev
+
+# Switch to dev branch
+git checkout dev
+
+# Make changes in dev branch
+notepad app.txt
+git add app.txt
+git commit -m "changes in dev branch"
+
+# Switch back to main branch
+git checkout main
+
+# Compare branches
+git diff main dev
+
+# Delete local branch
+git branch -d dev
+
+# Force delete (if not merged)
+git branch -D dev
+
+# Delete remote branch
+git push origin --delete dev
+
+# Show merged branches
+git branch --merged
+
+# Remove merged branch
+git branch -d dev
+
+# Clean unused remote branches
+git fetch --prune
+
+# Verify branch list (local)
+git branch
+
+# Verify remote branches
+git branch -r
+
+# Verify all branches
+git branch -a
+---------------------------------------------------------------
+Merging and Conflict Handling + Feature Branch Workflow  :-
+# Switch to main branch
+git checkout main
+
+# Fast-forward merge (no changes in main)
+git merge dev
+
+# Create conflict situation
+
+# Change in main
+notepad app.txt
+git add app.txt
+git commit -m "main change"
+
+# Switch to dev
+git checkout dev
+
+# Change in dev
+notepad app.txt
+git add app.txt
+git commit -m "dev change"
+
+# Merge dev into main (conflict)
+git checkout main
+git merge dev
+
+# Resolve conflict manually (edit file)
+notepad app.txt
+
+# After resolving
+git add app.txt
+git commit -m "conflict resolved"
+
+
+# -------------------------------
+# PART 2: FEATURE BRANCH WORKFLOW
+# -------------------------------
+
+# Create feature branch
+git checkout -b feature1
+
+# Make incremental commits
+notepad app.txt
+git add app.txt
+git commit -m "feature work 1"
+
+notepad app.txt
+git add app.txt
+git commit -m "feature work 2"
+
+# Push feature branch to remote
+git push origin feature1
+
+# Update feature branch with latest develop/main
+git checkout main
+git pull origin main
+
+git checkout feature1
+git merge main
+
+# Merge feature branch back to main
+git checkout main
+git merge feature1
+
+# Push final changes
+git push origin main
+-----------------------------------------------------------
+Initialize and Track Files
+# Initialize Git repository  
+git init
+
+# Create file
+notepad app.txt
+
+# Check status
+git status
+
+# Stage file
+git add app.txt
+
+# Commit changes
+git commit -m "first commit"
+
+# Modify file
+notepad app.txt
+
+# View difference
+git diff
+
+# Stage updated file
+git add app.txt
+
+# Commit again
+git commit -m "updated file"
+----------------------------------------------------------
+Git Hooks for Automation:
+# Initialize repository
+git init
+
+# Create file
+notepad app.txt
+
+# Check status
+git status
+
+# Stage file
+git add app.txt
+
+# Commit file
+git commit -m "first commit"
+
+# Modify file
+notepad app.txt
+
+# View changes
+git diff
+
+# Stage updated file
+git add app.txt
+
+# Commit again
+git commit -m "updated file"
+
+git hooks:
+cd .git/hooks
+notepad pre-commit:
+#!/bin/sh
+echo "Running lint check..."
+# example check
+if grep -i "error" app.txt
+then
+  echo "Lint failed: found 'error'"
+  exit 1
+fi
+notepad pre-push:
+#!/bin/sh
+echo "Running tests before push..."
+# dummy test
+echo "All tests passed"
+
+notepad test.py
+ 	print("Hello")
+	python test.py
+
+cd .git/hooks
+------------------------------
+# -------------------------------
+# PART 1: INITIALIZE & TRACK FILES
+# -------------------------------
+
+git init
+
+notepad app.txt
+
+git status
+
+git add app.txt
+
+git commit -m "first commit"
+
+notepad app.txt
+
+git diff
+
+git add app.txt
+
+git commit -m "updated file"
+
+
+# -------------------------------
+# PART 2: CREATE PYTHON FILE
+
+notepad app.py
+
+# write inside:
+# x = "hello"
+# print(x)
+
+python app.py
+
+
+# -------------------------------
+# PART 3: GIT HOOKS SETUP
+# -------------------------------
+
+cd .git/hooks
+
+notepad pre-commit
+
+# write inside:
+#!/bin/sh
+# echo "Running Python before commit..."
+# python app.py
+
+notepad pre-push
+
+# write inside:
+#!/bin/sh
+# echo "Running tests before push..."
+# python app.py
+
+notepad post-merge
+
+# write inside:
+# !/bin/sh
+# echo "Post merge hook running"
+
+# Rename if .txt exists
+mv pre-commit.txt pre-commit
+mv pre-push.txt pre-push
+mv post-merge.txt post-merge
+
+# Make executable
+chmod +x pre-commit
+chmod +x pre-push
+chmod +x post-merge
+
+# PART 4: TEST HOOKS
+cd ../../
+
+# Test pre-commit
+notepad app.txt
+git add app.txt
+git commit -m "test commit"
+
+# Test pre-push
+git push origin main
+
+# Test post-merge
+git branch dev
+git merge dev
+-----------------------------------------------------------------------------
+# PART 1: LOCAL vs REMOTE REPOSITORY
+
+# Check configured remote repository
+git remote -v
+#  Shows fetch & push URL of remote (GitHub)
+
+# Add remote repository (first time)
+git remote add origin https://github.com/username/repo.git
+#  Connect local repo to GitHub repo
+
+# Verify remote added
+git remote -v
+
+# Clone repository into new folder
+cd D:/
+git clone https://github.com/username/repo.git my_copy
+#  Creates new folder + copies project
+
+cd my_copy
+
+# Fetch updates from remote (only download, no merge)
+git fetch origin
+#  Safe check of remote changes
+
+# Pull changes (download + merge into local)
+git pull origin main
+#  Updates local repo with latest GitHub code
+
+# Make changes in file
+notepad app.txt
+
+# Stage file
+git add app.txt
+
+# Commit changes
+git commit -m "update file"
+
+# Push changes to GitHub
+git push origin main
+#  Upload local changes to remote repo
+
+
+# =========================================
+# PART 2: UNDO / ROLLBACK (RESET & REVERT)
+# =========================================
+
+# View commit history (short form)
+git log --oneline
+#  Shows commit IDs (important for rollback)
+
+# -----------------------------------------
+# RESET COMMANDS (LOCAL UNDO)
+# -----------------------------------------
+
+# Soft reset (delete commit, keep changes staged)
+git reset --soft HEAD~1
+#  Commit remove, changes SAFE (staging me)
+
+# Mixed reset (default - unstage file)
+git reset --mixed HEAD~1
+#  Commit remove, file unstage
+
+# Hard reset (danger - delete everything)
+git reset --hard HEAD~1
+#  Commit + changes permanently delete ❌
+
+
+# -----------------------------------------
+# DISCARD CHANGES
+# -----------------------------------------
+
+# Remove changes from working directory
+git restore app.txt
+#  File original state me aa jayegi
+
+
+# -----------------------------------------
+# SAFE UNDO (REVERT)
+# -----------------------------------------
+
+# Revert last commit safely
+git revert HEAD
+#  New commit create hota hai jo change reverse karta hai
+
+
+# -----------------------------------------
+# VERIFY CHANGES
+# -----------------------------------------
+
+# Check commit history again
+git log --oneline
+#  Confirm rollback or revert
+
+
+# -----------------------------------------
+# RECOVER DELETED COMMITS (REFLOG)
+# -----------------------------------------
+
+# Show all previous HEAD states
+git reflog
+#  Lost commits bhi yaha milte hain
+
+# Restore deleted commit using ID
+git reset --hard <commit_id>
+#  Old commit wapas aa jayega
+
