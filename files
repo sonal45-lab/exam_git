@@ -1,0 +1,987 @@
+
+
+C:\terraform>aws configure
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+terraform validate
+Setting up Terraform with AWS
+ aws configureSetting up Terraform with AWS
+provider "aws" {
+  region = "eu-north-1"
+}
+
+resource "aws_instance" "my_ec2" {
+  ami           = "ami-0a0823e4ea064404d"
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "Terraform-EC2"
+  }
+}
+----------------------------------------------------------
+Creating and Deploying a Simple Infrastructure using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "my-unique-bucket-name-12345"   # ⚠️ globally unique hona chahiye
+
+  tags = {
+    Name        = "My Terraform Bucket"
+    Environment = "Dev"
+  }
+}
+----------------------------------------------------------------------
+Managing Terraform State in a Team
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+
+  backend "s3" {
+    bucket  = "sonal-terraform-state-2026"
+    key     = "project1/terraform.tfstate"
+    region  = "ap-south-1"
+    encrypt = true
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_s3_bucket" "demo" {
+  bucket = "sonal-demo-bucket-2026"
+
+  tags = {
+    Name = "Demo Bucket"
+  }
+}
+--------------------------------------------------------------------------------
+Provisioning a Virtual Machine using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_instance" "my_ec2" {
+  ami           = "ami-0f5ee92e2d63afc18"   # Amazon Linux 2 (ap-south-1)
+  instance_type = "t2.micro"
+
+  key_name = "my-keypair"   # ⚠️ apna existing key pair name daalo
+
+  tags = {
+    Name = "Terraform-EC2"
+  }
+}
+----------------------------------------------------------------------------
+Provisioning a Web Server using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# 🔐 Security Group (SSH + HTTP)
+resource "aws_security_group" "web_sg" {
+  name = "web-security-group"
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# 💻 EC2 Instance + Web Server
+resource "aws_instance" "web_server" {
+  ami           = "ami-0f5ee92e2d63afc18"   # Amazon Linux 2 (Mumbai)
+  instance_type = "t2.micro"
+
+  key_name = "my-keypair"   # ⚠️ apna keypair name
+
+  security_groups = [aws_security_group.web_sg.name]
+
+  # 🚀 Web server install (Apache)
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install httpd -y
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Welcome from Terraform Web Server</h1>" > /var/www/html/index.html
+              EOF
+
+  tags = {
+    Name = "Terraform-Web-Server"
+  }
+}
+
+# 🌐 Output public IP
+output "public_ip" {
+  value = aws_instance.web_server.public_ip
+}
+----------------------------------------------------------------------------------------------
+Provisioning a Database using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# 🔐 Security Group (MySQL access)
+resource "aws_security_group" "rds_sg" {
+  name = "rds-security-group"
+
+  ingress {
+    description = "MySQL Access"
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]   # ⚠️ learning ke liye (production me restrict karo)
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# 🗄️ RDS Instance
+resource "aws_db_instance" "mydb" {
+  identifier        = "terraform-db"
+  allocated_storage = 20
+
+  engine            = "mysql"
+  engine_version    = "8.0"
+
+  instance_class    = "db.t3.micro"
+
+  username = "admin"
+  password = "Admin@12345"   # ⚠️ change karo
+
+  publicly_accessible = true
+  skip_final_snapshot = true
+
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+
+  tags = {
+    Name = "Terraform-RDS"
+  }
+}
+
+# 🌐 Output endpoint
+output "db_endpoint" {
+  value = aws_db_instance.mydb.endpoint
+}
+-------------------------------------------------------------------------------------------
+Deploying a Web Application using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# ---------------- VPC ----------------
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  tags = { Name = "main-vpc" }
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+  availability_zone       = "ap-south-1a"
+  tags = { Name = "public-subnet" }
+}
+
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "ap-south-1a"
+  tags = { Name = "private-subnet" }
+}
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+resource "aws_route_table_association" "public_assoc" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# ---------------- Security Groups ----------------
+resource "aws_security_group" "web_sg" {
+  name   = "web-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "db_sg" {
+  name   = "db-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ---------------- EC2 (Web Server) ----------------
+resource "aws_instance" "web" {
+  ami           = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+
+  key_name = "my-keypair"   # change karo
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install httpd mysql -y
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Web Server Running</h1>" > /var/www/html/index.html
+              EOF
+
+  tags = { Name = "web-server" }
+}
+
+# ---------------- RDS ----------------
+resource "aws_db_subnet_group" "db_subnet" {
+  name       = "db-subnet-group"
+  subnet_ids = [aws_subnet.private.id]
+
+  tags = { Name = "db-subnet-group" }
+}
+
+resource "aws_db_instance" "db" {
+  identifier        = "mydb"
+  engine            = "mysql"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 20
+
+  username = "admin"
+  password = "Admin@12345"   # change karo
+
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+
+  skip_final_snapshot = true
+
+  tags = { Name = "my-rds" }
+}
+
+# ---------------- Outputs ----------------
+output "web_public_ip" {
+  value = aws_instance.web.public_ip
+}
+
+output "db_endpoint" {
+  value = aws_db_instance.db.endpoint
+}
+-----------------------------------------------------------------------------------------------
+19: Managing Infrastructure Changes using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_instance" "demo" {
+  ami           = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+
+  key_name = "my-keypair"
+
+  tags = {
+    Name = "Old-Server"
+  }
+}
+--------------------------------------------------------------------------------------------------
+Recipe 20: Using Terraform to Configure Load Balancers
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# ---------------- VPC ----------------
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "subnet1" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "subnet2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "ap-south-1b"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+resource "aws_route_table_association" "a1" {
+  subnet_id      = aws_subnet.subnet1.id
+  route_table_id = aws_route_table.rt.id
+}
+
+resource "aws_route_table_association" "a2" {
+  subnet_id      = aws_subnet.subnet2.id
+  route_table_id = aws_route_table.rt.id
+}
+
+# ---------------- Security Group ----------------
+resource "aws_security_group" "web_sg" {
+  name   = "web-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ---------------- EC2 Instances ----------------
+resource "aws_instance" "web1" {
+  ami           = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.subnet1.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+
+  key_name = "my-keypair"
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum install httpd -y
+              systemctl start httpd
+              echo "Server 1" > /var/www/html/index.html
+              EOF
+}
+
+resource "aws_instance" "web2" {
+  ami           = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.subnet2.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+
+  key_name = "my-keypair"
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum install httpd -y
+              systemctl start httpd
+              echo "Server 2" > /var/www/html/index.html
+              EOF
+}
+
+# ---------------- ALB ----------------
+resource "aws_lb" "alb" {
+  name               = "my-alb"
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+  security_groups    = [aws_security_group.web_sg.id]
+}
+
+# ---------------- Target Group ----------------
+resource "aws_lb_target_group" "tg" {
+  name     = "my-target-group"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+# Attach EC2 to target group
+resource "aws_lb_target_group_attachment" "t1" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.web1.id
+  port             = 80
+}
+
+resource "aws_lb_target_group_attachment" "t2" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.web2.id
+  port             = 80
+}
+
+# ---------------- Listener ----------------
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+
+# ---------------- Output ----------------
+output "alb_dns" {
+  value = aws_lb.alb.dns_name
+}
+---------------------------------------------------------------------------------------
+Recipe 21: Managing Infrastructure Dependencies with Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# ---------------- VPC ----------------
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = "demo-vpc"
+  }
+}
+
+# ---------------- Subnet ----------------
+resource "aws_subnet" "subnet1" {
+  vpc_id            = aws_vpc.main.id   # 👈 implicit dependency
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "ap-south-1a"
+
+  tags = {
+    Name = "demo-subnet"
+  }
+}
+
+# ---------------- Internet Gateway ----------------
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+# ---------------- Route Table ----------------
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+resource "aws_route_table_association" "rta" {
+  subnet_id      = aws_subnet.subnet1.id
+  route_table_id = aws_route_table.rt.id
+}
+
+# ---------------- Security Group ----------------
+resource "aws_security_group" "sg" {
+  name   = "demo-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ---------------- EC2 Instance ----------------
+resource "aws_instance" "web" {
+  ami           = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+
+  subnet_id              = aws_subnet.subnet1.id
+  vpc_security_group_ids = [aws_security_group.sg.id]
+
+  key_name = "my-keypair"
+
+  # 👇 explicit dependency (optional but for learning)
+  depends_on = [
+    aws_internet_gateway.igw
+  ]
+
+  tags = {
+    Name = "dependency-demo-ec2"
+  }
+}
+-------------------------------------------------------------------------------
+Recipe 22: Using Terraform for Zero-Downtime Deployment
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# ---------------- VPC ----------------
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "subnet1" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "subnet2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "ap-south-1b"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+resource "aws_route_table_association" "a1" {
+  subnet_id      = aws_subnet.subnet1.id
+  route_table_id = aws_route_table.rt.id
+}
+
+resource "aws_route_table_association" "a2" {
+  subnet_id      = aws_subnet.subnet2.id
+  route_table_id = aws_route_table.rt.id
+}
+
+# ---------------- Security Group ----------------
+resource "aws_security_group" "web_sg" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ---------------- Launch Template ----------------
+resource "aws_launch_template" "lt" {
+  name_prefix   = "web-template"
+  image_id      = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+
+  user_data = base64encode(<<EOF
+              #!/bin/bash
+              yum install httpd -y
+              systemctl start httpd
+              echo "Version 1" > /var/www/html/index.html
+              EOF
+  )
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ---------------- Target Group ----------------
+resource "aws_lb_target_group" "tg" {
+  name     = "tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+# ---------------- Load Balancer ----------------
+resource "aws_lb" "alb" {
+  name               = "alb"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+  security_groups    = [aws_security_group.web_sg.id]
+}
+
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+
+# ---------------- Auto Scaling Group ----------------
+resource "aws_autoscaling_group" "asg" {
+  desired_capacity     = 2
+  max_size             = 3
+  min_size             = 1
+
+  vpc_zone_identifier  = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+
+  target_group_arns = [aws_lb_target_group.tg.arn]
+
+  launch_template {
+    id      = aws_launch_template.lt.id
+    version = "$Latest"
+  }
+
+  health_check_type = "ELB"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ---------------- Output ----------------
+output "alb_dns" {
+  value = aws_lb.alb.dns_name
+}
+----------------------------------------------------------------------
+Recipe 23: Scaling Infrastructure using Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+# ---------------- VPC ----------------
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "subnet1" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "subnet2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "ap-south-1b"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+resource "aws_route_table_association" "a1" {
+  subnet_id      = aws_subnet.subnet1.id
+  route_table_id = aws_route_table.rt.id
+}
+
+resource "aws_route_table_association" "a2" {
+  subnet_id      = aws_subnet.subnet2.id
+  route_table_id = aws_route_table.rt.id
+}
+
+# ---------------- Security Group ----------------
+resource "aws_security_group" "web_sg" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# ---------------- Launch Template ----------------
+resource "aws_launch_template" "lt" {
+  name_prefix   = "scaling-template"
+  image_id      = "ami-0f5ee92e2d63afc18"
+  instance_type = "t2.micro"
+
+  user_data = base64encode(<<EOF
+              #!/bin/bash
+              yum install httpd -y
+              systemctl start httpd
+              echo "Auto Scaling Server" > /var/www/html/index.html
+              EOF
+  )
+}
+
+# ---------------- Target Group ----------------
+resource "aws_lb_target_group" "tg" {
+  name     = "scaling-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+# ---------------- Load Balancer ----------------
+resource "aws_lb" "alb" {
+  name               = "scaling-alb"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+  security_groups    = [aws_security_group.web_sg.id]
+}
+
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+
+# ---------------- Auto Scaling Group ----------------
+resource "aws_autoscaling_group" "asg" {
+  desired_capacity    = 1
+  min_size            = 1
+  max_size            = 3
+
+  vpc_zone_identifier = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+  target_group_arns   = [aws_lb_target_group.tg.arn]
+
+  launch_template {
+    id      = aws_launch_template.lt.id
+    version = "$Latest"
+  }
+
+  health_check_type = "ELB"
+}
+
+# ---------------- Scaling Policy ----------------
+resource "aws_autoscaling_policy" "scale_up" {
+  name                   = "scale-up"
+  autoscaling_group_name = aws_autoscaling_group.asg.name
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1
+  cooldown               = 60
+}
+
+resource "aws_autoscaling_policy" "scale_down" {
+  name                   = "scale-down"
+  autoscaling_group_name = aws_autoscaling_group.asg.name
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = -1
+  cooldown               = 60
+}
+
+# ---------------- CloudWatch Alarms ----------------
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "cpu-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 60
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.asg.name
+  }
+
+  alarm_actions = [aws_autoscaling_policy.scale_up.arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_low" {
+  alarm_name          = "cpu-low"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 20
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.asg.name
+  }
+
+  alarm_actions = [aws_autoscaling_policy.scale_down.arn]
+}
+
+# ---------------- Output ----------------
+output "alb_dns" {
+  value = aws_lb.alb.dns_name
+}
